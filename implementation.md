@@ -1,6 +1,6 @@
 # Phase 73 — Claude as Peer Reviewer for SAR Hypotheses
 
-**Version:** 1.1 | **Tier:** Micro | **Date:** 2026-03-28
+**Version:** 1.1 | **Tier:** Micro | **Date:** 2026-03-27
 
 ## Goal
 Use Claude as a structured peer reviewer for SAR hypotheses. Given a hypothesis about structure-activity relationships, Claude evaluates it against compound data and returns a structured review with verdict, supporting evidence, counterevidence, and confidence score.
@@ -11,17 +11,16 @@ Outputs: peer_reviews.json, peer_review_report.txt
 
 ## Logic
 1. Load compound library with pIC50 values
-2. Generate 2 SAR hypotheses from data patterns
+2. Generate 2 SAR hypotheses from data patterns (e.g., "EWG substituents increase potency in benzimidazole series")
 3. Send each hypothesis + supporting compound data to Claude with a peer review system prompt
 4. Parse structured review: verdict (support/refute/inconclusive), evidence_for, evidence_against, confidence (0-1), suggestion
-5. Save structured reviews
+5. Save structured reviews and summary report
 
 ## Key Concepts
-- Structured peer review output format (JSON)
-- System prompt engineering for critical evaluation role
-- Claude as domain expert reviewer (not generator)
-- Evidence-based reasoning with compound data
-- Anti-sycophancy prompting ("Be critical. Look for counterevidence.")
+- Structured peer review output format (JSON with verdict, evidence_for, evidence_against, confidence, suggestion)
+- System prompt engineering for critical evaluation role — must explicitly instruct Claude to find counterevidence
+- Claude as domain expert reviewer (evaluating, not generating)
+- Evidence-based reasoning: Claude must cite specific compound names and pIC50 values
 
 ## Verification Checklist
 - [x] 2 hypotheses reviewed
@@ -34,17 +33,14 @@ Outputs: peer_reviews.json, peer_review_report.txt
 | Metric | Value |
 |--------|-------|
 | Hypotheses reviewed | 2 |
-| H1 (EWG benzimidazole) | Verdict: support, Confidence: 0.82 |
-| H2 (Indole uniformly potent) | Verdict: refute, Confidence: 0.85 |
-| Total tokens | in=757 out=822 |
+| Hypothesis 1 verdict | support (confidence=0.82) — EWG on bzim increases potency |
+| Hypothesis 2 verdict | refute (confidence=0.85) — ind series NOT uniformly high, R-group matters |
+| Input tokens | 757 |
+| Output tokens | 822 |
 | Est. cost | $0.0039 |
 
-Key findings:
-- Claude correctly supported the EWG hypothesis but noted NO2 underperformance as counterevidence
-- Claude refuted the "uniform potency" hypothesis, noting 1.40 pIC50 unit range across R-groups
-- Anti-sycophancy prompting worked: Claude provided genuine counterevidence and refuted H2
-- Both reviews included actionable suggestions for hypothesis refinement
+## Risks (resolved)
+- Sycophancy risk: mitigated by explicit "find counterevidence" instruction — Claude successfully refuted hypothesis 2
+- JSON parsing: no issues encountered
 
-## Risks
-- Claude may always agree (sycophancy) — mitigated with explicit "find counterevidence" instruction; H2 refuted confirms mitigation works
-- JSON parsing failures — regex fallback included
+Key finding: Claude successfully refuted hypothesis 2 (indole uniformly high potency) by noting that R-group electronic properties drive meaningful modulation within the series. This demonstrates Claude can critically evaluate rather than just agree with presented hypotheses.
